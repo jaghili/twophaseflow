@@ -7,12 +7,12 @@ CoreyConstant::CoreyConstant() {
 
   // Capillary pressures  
   pcname="corey-constant";
-  _pc1 = 0.; // do not touch !
-  _pc2 = (rhow-rhoo) * grav * L;
+  pef = 0.; // do not touch !
+  pem = (rhow-rhoo) * grav * L;
   b1 = 0.; // b1 < b2
-  b2 = _pc2 ; // assert pc2 >= b2
-  tau1 = 1. - b1/_pc2;
-  tau2 = tau1 + 1 + b1 * std::log(1-tau1)/_pc2;
+  b2 = pem ; // assert pc2 >= b2
+  tau1 = 1. - b1/pem;
+  tau2 = tau1 + 1 + b1 * std::log(1-tau1)/pem;
   tau3 = tau2 + 1;
 
   
@@ -21,18 +21,18 @@ CoreyConstant::CoreyConstant() {
   taumax = tau3-1e-12;
       
   // capillary pressures
-  pc[0][0] = [this](R sat) -> R { return _pc1; }; // constant dans frac
+  pc[0][0] = [this](R sat) -> R { return pef; }; // constant dans frac
   pc[1][1] = [this](R sat) -> R {
-    return _pc2 - b2 * std::log(1-sat); // Corey dans matrice
+    return pem - b2 * std::log(1-sat); // Corey dans matrice
   };
   pc[0][1] = [this](R tau) -> R {
     R s;
-    if (tau < tau1) { s = _pc1; }
+    if (tau < tau1) { s = pef; }
     else if (tau <= tau2) {
-      s = _pc2*(tau-tau1); 
+      s = pem*(tau-tau1); 
     }
     else {
-      s = _pc2 - b2 * std::log(1-(tau-tau2));
+      s = pem - b2 * std::log(1-(tau-tau2));
     }
     return s;
   }; // pc01
@@ -44,7 +44,7 @@ CoreyConstant::CoreyConstant() {
   dpc[0][1] = [this](R tau) -> R {
 	R s;
 	if (tau < tau1) { s = 0.; }
-	else if (tau <= tau2) { s = _pc2;}
+	else if (tau <= tau2) { s = pem;}
 	else { s =  b2/(1-(tau-tau2)); }
 	return s;
   }; // pc01

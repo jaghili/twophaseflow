@@ -27,18 +27,23 @@ struct Physics {
   const float muw = 1e-3;
 
   const R pw = 0.; // base pressure water 
-  
-  const R phi = 0.1; // porosity
 
   static const short Nrt = 2;
   
-  const R perm[Nrt] = {
-    1e-13, // perm of rt1
-    1e-15 // perm of rt2
+  const R phi[Nrt] =
+    {
+     1.0, // porosité de rt1 (f)
+     0.15 // porosité de rt2 (m)	      
+    };
+  
+  const R perm[Nrt] =
+    {
+     1e-13, // permeability of rt1 (f)
+     1e-15 // permeability of rt2 (m)
   };
   
   // boundary
-  R s_bottom = 1.; // oil
+  R s_bottom = 0.9; // oil  // BEWARE OF ASYMPTOTE => !!!! MUST BE < 1 !!!! <= 
   const R s_top = 0.; // oil
   const R pw_inj = 1e5; // water injection 
   const R pw_bottom = pw_inj + L*grav*rhow; // water bottom
@@ -80,7 +85,7 @@ struct Physics {
 	X.Tau(i) = tau2 + 0.5*eps1;
       }
       if (X.Tau(i) < 0.) {
-	X.Tau(i) = 1e-12;
+	X.Tau(i) = 0.;
       }
       if (X.Tau(i) >= tau3) {
 	X.Tau(i) = tau3 - 1e-12;
@@ -90,15 +95,15 @@ struct Physics {
   
   // Capillary pressures  
   std::string pcname="pc";
-  R _pc1; // do not touch !
-  R _pc2;
+  R pef; // do not touch !
+  R pem;
   R b1; // b1 < b2
   R b2; // assert pc2 >= b2
   R tau1;
   R tau2;
   R tau3;
 
-  // taumin
+  // tau range
   R taumin;
   R taumax;
   

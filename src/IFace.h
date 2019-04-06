@@ -15,8 +15,8 @@ struct IFace : Face {
   R flux_wat_left=0.;
   R flux_wat_right=0.;
 
-  bool is_taumin = false; // default tau
-  R tau = -1e300;
+  bool istaumin = false; // default
+  bool istaumax = false; // default 
 };
 
 #endif

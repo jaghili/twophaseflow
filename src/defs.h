@@ -22,6 +22,7 @@ using std::max;
 template <typename T>
 uint compare(T& A, T& B) { return (A.idx < B.idx); };
 
+
 // count the nnz of a Eigen::Matrix m
 /*
   void countnnz(Mat &m) {

@@ -31,11 +31,11 @@ SpMat computeJacobian(Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
       
       // oil
       coeffs.push_back(Triplet(oil, dp, 0.));
-      coeffs.push_back(Triplet(oil, ds, P.rhoo * P.phi * M->vol /dt));
+      coeffs.push_back(Triplet(oil, ds, P.rhoo * P.phi[M->rt] * M->vol /dt));
 
       // water
       coeffs.push_back(Triplet(wat, dp, 0.));
-      coeffs.push_back(Triplet(wat, ds, - P.rhow * P.phi * M->vol /dt));
+      coeffs.push_back(Triplet(wat, ds, - P.rhow * P.phi[M->rt] * M->vol /dt));
     } // OK
 
   // Accumulation terms in interfaces (fictive) cells
@@ -49,9 +49,13 @@ SpMat computeJacobian(Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
       uint wat = 2*(N+iFi)+1;
       uint dtau = 2*(N+iFi)+1;
 
-      coeffs.push_back(Triplet(oil, dtau, P.rhoo * P.phi * vvol /dt * P.dsat[rtd][rtu](X.Tau(iFi)) + P.rhoo * P.phi * vvol /dt * P.dsat[rtu][rtd](X.Tau(iFi))));
+      coeffs.push_back(Triplet(oil, dtau,
+			       P.rhoo * P.phi[rtd] * vvol /dt * P.dsat[rtd][rtu](X.Tau(iFi))
+			       + P.rhoo * P.phi[rtu] * vvol /dt * P.dsat[rtu][rtd](X.Tau(iFi))));
       
-      coeffs.push_back(Triplet(wat, dtau, - P.rhow * P.phi * vvol /dt * P.dsat[rtd][rtu](X.Tau(iFi)) -P.rhow * P.phi * vvol /dt * P.dsat[rtu][rtd](X.Tau(iFi))));
+      coeffs.push_back(Triplet(wat, dtau,
+			       -P.rhow * P.phi[rtd] * vvol /dt * P.dsat[rtd][rtu](X.Tau(iFi))
+			       -P.rhow * P.phi[rtu] * vvol /dt * P.dsat[rtu][rtd](X.Tau(iFi))));
       iFi++;
     }
   
@@ -178,25 +182,35 @@ SpMat computeJacobian(Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
       R ss = Trans * mob;
       coeffs.push_back(Triplet(oil_g, dpdg, ss));
       coeffs.push_back(Triplet(oil_g, dpi, -ss));
-      coeffs.push_back(Triplet(oil_d, dpdg, -ss));
-      coeffs.push_back(Triplet(oil_d, dpi, ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_d, dpdg, -ss));
+	coeffs.push_back(Triplet(oil_d, dpi, ss));
+      }
 
 	
       // dérivées de la mobilité mob1 par rapport à S ou Tau 
       ss = dmob * F->flux_oil_left;
       coeffs.push_back(Triplet(oil_g, 2*jup+1, ss));
-      coeffs.push_back(Triplet(oil_d, 2*jup+1, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_d, 2*jup+1, -ss));
+      }
 
 	
       // dérivées par rapport à Pc(S(left)) par rapport à S  
       ss = Trans * mob * P.dpc[rtd][rtd](X.S(left));
       coeffs.push_back(Triplet(oil_g, dsdg, ss));
-      coeffs.push_back(Triplet(oil_d, dsdg, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_d, dsdg, -ss));
+      }
 
       // dérivées part rapport à pc[rtd][rtu](tau(iFi))
       ss = - Trans * mob * P.dpc[rtd][rtu](X.Tau(iFi));
       coeffs.push_back(Triplet(oil_g, dtau, ss));
-      coeffs.push_back(Triplet(oil_d, dtau, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_d, dtau, -ss));
+      } else {
+	coeffs.push_back(Triplet(oil_d, dtau, 1.0));
+      }
 
       // water
       if (F->flux_wat_left >= 0.) {
@@ -259,24 +273,34 @@ SpMat computeJacobian(Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
       R ss = Trans * mob;
       coeffs.push_back(Triplet(oil_d, dpdd, ss));
       coeffs.push_back(Triplet(oil_d, dpi, -ss));
-      coeffs.push_back(Triplet(oil_g, dpdd, -ss));
-      coeffs.push_back(Triplet(oil_g, dpi, ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_g, dpdd, -ss));
+	coeffs.push_back(Triplet(oil_g, dpi, ss));
+      }
       
       // dérivées de la mobilité par rapport à S
       ss = dmob * F->flux_oil_right;
       coeffs.push_back(Triplet(oil_d, 2*jup+1, ss));
-      coeffs.push_back(Triplet(oil_g, 2*jup+1, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_g, 2*jup+1, -ss));
+      }
 	
       // dérivées par rapport à Pc(S(right))
       ss = Trans * mob * P.dpc[rtu][rtu](X.S(right));
       coeffs.push_back(Triplet(oil_d, dsdd, ss));
-      coeffs.push_back(Triplet(oil_g, dsdd, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_g, dsdd, -ss));
+      }
       
 	
       // dérivées par rapport à Pc[rtu][rtd]
       ss = - Trans *  mob * P.dpc[rtu][rtd](X.Tau(iFi));
       coeffs.push_back(Triplet(oil_d, dtau, ss));
-      coeffs.push_back(Triplet(oil_g, dtau, -ss));
+      if (!F->istaumin) {
+	coeffs.push_back(Triplet(oil_g, dtau, -ss));
+      } else {
+	coeffs.push_back(Triplet(oil_g, dtau, 1.0));
+      }
 
       
       // water
@@ -356,30 +380,5 @@ SpMat computeJacobian(Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
     std::cout << "\n";
   }
   */  
-  return dRes;
-}
-
-
-// Computation of the (finite difference) Jacobian in dense format
-Mat computeApproxJacobian (Mesh* Mh, Dat & X, Dat & Xold, Physics & P) {
-  R h = 1e-9; // bug quand 1e-11
-  uint Ndof = Mh->N + Mh->Ni;
-  Mat Id = Mat::Identity(2*Ndof,2*Ndof);
-  Mat dRes = Mat::Zero(2*Ndof, 2*Ndof);
-
-  // Dat X1,X2;
-  // for (int j = 0; j < dRes.cols() ; j++) {
-  //   Vec vX2 = X.get() + h*Id.col(j);
-  //   Vec vX1 = X.get(); 
-  //   X2.set(vX2);
-  //   X1.set(vX1);
-  //   F2.computeF(Mh, X2, P);
-  //   F1.computeF(Mh, X1, P);
-  //   Mat _dRes  = ( computeResidual(Mh, F2, X2, Xold, P) - computeResidual(Mh, F1, X1, Xold, P) ) / h;
-  //   for (uint i = 0; i < Ndof; i++) {
-  //     dRes(2*i,j) = _dRes(i,0);
-  //     dRes(2*i+1,j) = _dRes(i,1);
-  //   }
-  // }
   return dRes;
 }

@@ -2,9 +2,9 @@
 #include <fstream>
 
 void Physics::writetofile() {
-  std::ofstream pcsat("./output/physics_"+pcname+"_sat.dat");
-  std::ofstream pcsati("./output/physics_"+pcname+"_tau.dat");
-  std::ofstream pdata("./output/physics.tmp");
+  std::ofstream pcsat("./output/physics_pc_sat.dat");
+  std::ofstream pcsati("./output/physics_pc_tau.dat");
+  std::ofstream pdata("./output/physics.dat");
   
   // writing physical data
   pdata << "Physics \n"
@@ -19,7 +19,7 @@ void Physics::writetofile() {
 	<< "muo\t\t\t" << muo << "\n"
 	<< "muw\t\t\t" << muw << "\n"
 	<< "pw\t\t\t" << pw << "\n"
-	<< "phi\t\t\t" << phi << "\n"
+	<< "phi\t\t\t" << phi[0] << "\t" << phi[1] << "\n"
 	<< "Nrt\t\t\t" << Nrt << "\n"
 	<< "tau1\t\t\t"  << tau1 << "\n"
     	<< "tau2\t\t\t"  << tau2 << "\n"

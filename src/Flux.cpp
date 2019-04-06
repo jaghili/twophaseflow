@@ -43,8 +43,15 @@ void computeF(Mesh* Mh, Dat& X, Physics & P) {  // Compute Fluxes and Gradients
     uint rt = T->rt; // get rocktype of bottom cell
     R A = -(T->xT - F->xF).unaryExpr(&invtreshold).dot(F->nF);
     R Trans = P.perm[rt] * A;// / (F->xF - T->xT).norm();
-
-    F->flux_oil = Trans * (P.rhoo/A * P.vg.dot(F->nF) + (X.P(iT) + P.pc[rt][rt](X.S(iT)) - F->pw - P.pc[rt][rt](F->sat) )) ;    
+    
+    F->flux_oil = Trans * (P.rhoo/A * P.vg.dot(F->nF) + (X.P(iT) + P.pc[rt][rt](X.S(iT)) - F->pw - P.pc[rt][rt](F->sat) )) ;
+    /*
+    std::cout << "computeFlux Trans" << Trans << std::endl;
+    std::cout << "computeFlux Pc(satC)" << P.pc[rt][rt](X.S(iT)) << std::endl;
+    std::cout << "computeFlux satFb" << F->sat << std::endl;
+    std::cout << "computeFlux Pc(satFb)" << P.pc[rt][rt](F->sat) << std::endl;
+    std::cout << "computeFlux flux oil" << F->flux_oil << std::endl << std::endl;
+    */
     F->flux_wat = Trans * (P.rhow/A * P.vg.dot(F->nF) + X.P(iT) - F->pw) ;
     
     iFb++;
